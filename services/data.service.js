@@ -1,5 +1,5 @@
 const db = require('./db');
-let currentUser;
+ let currentUser;
 let accountDetails = {
     1000: { acno: 1000, username: "userone", password: "userone", balance: 50000 },
     1001: { acno: 1001, username: "usertwo", password: "usertwo", balance: 5000 },
@@ -39,13 +39,15 @@ const login=(req,accno,password)=>{
   var acno = parseInt(accno);
    return db.User.findOne({acno,password})
    .then(user=>{
-     console.log(user);
+    //  console.log(user);
      if(user){
-      req.session.currentUser=user;
+      req.session.currentUser=user.acno;
       return {
         statusCode:200,
         status:true,
-        message:"successfully login"
+        message:"successfully login",
+        name:user.username,
+        acno:user.acno
     }
      }
      else{
@@ -80,7 +82,7 @@ const login=(req,accno,password)=>{
     })
    
   }
- const withdraw=(acno,password,amt)=>{
+ const withdraw=(req,acno,password,amt)=>{
     var amount=parseInt(amt);
     return db.User.findOne({acno,password})
     .then(user=>{
@@ -91,6 +93,16 @@ const login=(req,accno,password)=>{
           message:"Invalid credentials"
       }
       }
+      if(req.session.currentUser != acno){
+        // console.log(req.session.currentUser)
+        console.log(acno)
+        return {
+          statusCode:422,
+          status:false,
+          message:"permission denied"
+      }
+      }
+     
       if(user.balance<amount){
         return {
           statusCode:422,
@@ -111,9 +123,30 @@ const login=(req,accno,password)=>{
   }
 
 
+  const deleteAccDetails =(acno)=>{
+    return db.User.deleteOne({
+      acno:acno
+    }).then(user=>{
+      if(!user){
+        return {
+          statusCode:422,
+          status:false,
+          message:"operation failed"
+      }
+      }
+      return {
+        statusCode:200,
+        status:true,
+        message:"Account Number "+acno+" deleted successfully"
+    } 
+    })
+  }
+
+
 module.exports={
     register,
     login,
     deposit,
-    withdraw
+    withdraw,
+    deleteAccDetails
 }

@@ -1,7 +1,12 @@
 const express = require('express');
 const session = require('express-session');
+const cors = require('cors');
 const dataService = require('./services/data.service');
 const app = express();
+app.use(cors({
+   origin:'http://localhost:4200',
+   credentials:true
+}))
 app.use(session({
     secret:'randomsecurestring',
     resave:false,
@@ -63,9 +68,9 @@ app.post('/login',(req,res)=>{
 });
 //POST deposit   
 app.post('/deposit',authMiddleware,(req,res)=>{
-    console.log(req.session.currentUser)
+    // console.log(req.session.currentUser)
      
-  dataService.deposit(req.body.acno,req.body.pswd,req.body.amount)
+  dataService.deposit(req.body.acno,req.body.pswd,req.body.amt)
   .then(result=>{
     res.status(result.statusCode).json(result)
 
@@ -74,8 +79,8 @@ app.post('/deposit',authMiddleware,(req,res)=>{
 });
 //POST withdraw   
 app.post('/withdraw',authMiddleware,(req,res)=>{
-    
-  dataService.withdraw(req.body.acno,req.body.pswd,req.body.amount)
+  console.log(req.session.currentUser)
+  dataService.withdraw(req,req.body.acno,req.body.pswd,req.body.amt)
   .then(result=>{
     res.status(result.statusCode).json(result)
 
@@ -94,6 +99,12 @@ app.patch('/',(req,res)=>{
 app.delete('/',(req,res)=>{
     res.send("THIS IS A DELETE METHOD");
 })
+app.delete('/deleteAccDetails/:acno',authMiddleware,(req,res)=>{
+  dataService.deleteAccDetails(req.params.acno)
+  .then(result=>{
+    res.status(result.statusCode).json(result)
+ })
+});
 app.listen(3000,()=>{
     console.log("server started at port:3000");  
 })
